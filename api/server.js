@@ -3,7 +3,7 @@ const axios = require('axios');
 const ipaddr = require('ipaddr.js');
 
 const app = express();
-app.set('trust proxy', 1); // <--- Set trust proxy to true
+app.set('trust proxy', 1); // Set trust proxy to true
 let allowedIPs = [];
 
 // Fetch allowed IP addresses from API every 30 minutes
@@ -25,17 +25,17 @@ app.get('/check-ip', (req, res) => {
   const isLocalRequest = clientIp === '127.0.0.1' || clientIp === '::1';
   if (isLocalRequest) {
     console.log('Local request detected. Bypassing IP check.');
-    res.send('You are protected');
+    res.send(`You are protected. Allowed IPs: ${allowedIPs.join(', ')}`); // Include allowed IPs
   } else {
     try {
       const parsedIp = ipaddr.parse(clientIp).toString();
       if (parsedIp && ipaddr.IPv4.isValid(parsedIp) && allowedIPs.includes(parsedIp)) {
         console.log(`IP ${parsedIp} is allowed`);
-        res.send('You are protected.');
+        res.send(`You are protected. Allowed IPs: ${allowedIPs.join(', ')}`); // Include allowed IPs
       } else {
         console.log(`IP ${parsedIp} is not allowed`);
         console.log(`Allowed IPs: ${allowedIPs.join(', ')}`);
-        res.send(`Not protected. Your IP is ${parsedIp}.`);
+        res.send(`Not protected. Your IP is ${parsedIp}. Allowed IPs: ${allowedIPs.join(', ')}`); // Include allowed IPs
       }
     } catch (error) {
       console.error(`Error parsing IP: ${error}`);
