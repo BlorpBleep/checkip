@@ -1,2 +1,2 @@
 # ipcheck
-An ip checker
+An ip checker in development
