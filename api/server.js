@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const ipaddr = require('ipaddr.js');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.set('trust proxy', 1); // Set trust proxy to true
@@ -14,6 +15,7 @@ const fetchAllowedIPs = async () => {
   try {
     const response = await axios.get('https://api.unblockvpn.io/app/v1/relays');
     const data = response.data;
+    console.log(`First 200 characters of data: ${JSON.stringify(data).substring(0, 200)}`);
     const relays = data.relays; // Access the "relays" array
     allowedIPs = relays.map(relay => relay.ip); // Extract IPs from each relay object
     console.log(`Updated allowed IPs: ${allowedIPs.join(', ')}`);
@@ -21,7 +23,7 @@ const fetchAllowedIPs = async () => {
     console.error(`Error fetching allowed IPs: ${error}`);
     // If fetching fails, attempt to read from backup file
     try {
-      const backupData = fs.readFileSync('relays.json', 'utf8');
+      const backupData = fs.readFileSync(path.resolve(__dirname, '..', 'relays.json'), 'utf8');
       const backupIPs = JSON.parse(backupData);
       allowedIPs = backupIPs;
       console.log(`Using backup IPs: ${allowedIPs.join(', ')}`);
