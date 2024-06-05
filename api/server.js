@@ -3,6 +3,8 @@ const axios = require('axios');
 const ipaddr = require('ipaddr.js');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config(); // Load environment variables from .env file
+const locationApp = require('./location'); // Import the location app
 
 const app = express();
 app.set('trust proxy', 1); // Set trust proxy to true
@@ -52,6 +54,8 @@ fetchAllowedIPs(); // Initial fetch on startup
 
 setInterval(fetchAllowedIPs, 30 * 60 * 1000); // 30 minutes
 
+app.use('/location', locationApp); // Mount the location app
+
 app.get('/check-ip', (req, res) => {
   const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
   console.log(`Incoming request from IP: ${clientIp}`);
@@ -72,11 +76,11 @@ app.get('/check-ip', (req, res) => {
         if (parsedIp && ipaddr.IPv4.isValid(parsedIp) && Array.isArray(allowedIPs)) {
           if (allowedIPs.includes(parsedIp)) {
             console.log(`IP ${parsedIp} is allowed`);
-            res.send(`You are protected. Allowed IPs: ${allowedIPs.join(', ')}`);
+            res.send(`Protected by CicadaVPN! Allowed IPs: ${allowedIPs.join(', ')}`);
           } else {
             console.log(`IP ${parsedIp} is not allowed`);
             console.log(`Allowed IPs: ${allowedIPs.join(', ')}`);
-            res.send(`Not protected. Your IP is ${parsedIp}. Allowed IPs: ${allowedIPs.join(', ')}`);
+            res.send(`Not using CicadaVPN - Your IP is ${parsedIp}. Allowed IPs: ${allowedIPs.join(', ')}`);
           }
         } else {
           console.error('Allowed IPs is not an array or parsedIp is not valid.');
@@ -88,6 +92,10 @@ app.get('/check-ip', (req, res) => {
       }
     }
   }
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
 });
 
 module.exports = app;
