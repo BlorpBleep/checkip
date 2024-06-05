@@ -118,3 +118,4 @@ app.get('/check-ip', async (req, res) => {
 // Integrate locationApp
 app.use('/location', locationApp);
 
+module.exports = app; // Ensure the app is exported for Vercel
