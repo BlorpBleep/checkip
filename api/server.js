@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const ipaddr = require('ipaddr.js');
+const fs = require('fs');
 
 const app = express();
 app.set('trust proxy', 1); // Set trust proxy to true
@@ -18,6 +19,15 @@ const fetchAllowedIPs = async () => {
     console.log(`Updated allowed IPs: ${allowedIPs.join(', ')}`);
   } catch (error) {
     console.error(`Error fetching allowed IPs: ${error}`);
+    // If fetching fails, attempt to read from backup file
+    try {
+      const backupData = fs.readFileSync('relays.json', 'utf8');
+      const backupIPs = JSON.parse(backupData);
+      allowedIPs = backupIPs;
+      console.log(`Using backup IPs: ${allowedIPs.join(', ')}`);
+    } catch (backupError) {
+      console.error(`Error reading backup IPs: ${backupError}`);
+    }
   } finally {
     isFetchingIPs = false;
   }
@@ -30,12 +40,15 @@ setInterval(fetchAllowedIPs, 30 * 60 * 1000); // 30 minutes
 app.get('/check-ip', (req, res) => {
   const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
   const isLocalRequest = clientIp === '127.0.0.1' || clientIp === '::1';
+  console.log(`Incoming request from IP: ${clientIp}`);
+  
   if (isLocalRequest) {
     console.log('Local request detected. Bypassing IP check.');
     res.send(`You are protected. Allowed IPs: ${allowedIPs.join(', ')}`);
   } else {
     if (isFetchingIPs) {
       // IPs are being fetched, send a temporary message
+      console.log('Allowed IPs are being updated. Please try again later.');
       res.send('Allowed IPs are being updated. Please try again later.');
     } else {
       try {
