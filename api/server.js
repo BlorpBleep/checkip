@@ -6,7 +6,9 @@ const path = require('path');
 
 const app = express();
 app.set('trust proxy', 1); // Set trust proxy to true
+
 let allowedIPs = [];
+
 let isFetchingIPs = false; // Flag to track ongoing fetch
 
 // Fetch allowed IP addresses from API every 30 minutes
@@ -29,6 +31,8 @@ const fetchAllowedIPs = async () => {
       console.log(`Using backup IPs: ${allowedIPs.join(', ')}`);
     } catch (backupError) {
       console.error(`Error reading backup IPs: ${backupError}`);
+      // If both API fetch and backup file read fail, set allowedIPs to empty array
+      allowedIPs = [];
     }
   } finally {
     isFetchingIPs = false;
@@ -41,8 +45,9 @@ setInterval(fetchAllowedIPs, 30 * 60 * 1000); // 30 minutes
 
 app.get('/check-ip', (req, res) => {
   const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
-  const isLocalRequest = clientIp === '127.0.0.1' || clientIp === '::1';
   console.log(`Incoming request from IP: ${clientIp}`);
+  
+  const isLocalRequest = clientIp === '127.0.0.1' || clientIp === '::1';
   
   if (isLocalRequest) {
     console.log('Local request detected. Bypassing IP check.');
@@ -55,13 +60,18 @@ app.get('/check-ip', (req, res) => {
     } else {
       try {
         const parsedIp = ipaddr.parse(clientIp).toString();
-        if (parsedIp && ipaddr.IPv4.isValid(parsedIp) && allowedIPs.includes(parsedIp)) {
-          console.log(`IP ${parsedIp} is allowed`);
-          res.send(`You are protected. Allowed IPs: ${allowedIPs.join(', ')}`);
+        if (parsedIp && ipaddr.IPv4.isValid(parsedIp) && Array.isArray(allowedIPs)) {
+          if (allowedIPs.includes(parsedIp)) {
+            console.log(`IP ${parsedIp} is allowed`);
+            res.send(`You are protected. Allowed IPs: ${allowedIPs.join(', ')}`);
+          } else {
+            console.log(`IP ${parsedIp} is not allowed`);
+            console.log(`Allowed IPs: ${allowedIPs.join(', ')}`);
+            res.send(`Not protected. Your IP is ${parsedIp}. Allowed IPs: ${allowedIPs.join(', ')}`);
+          }
         } else {
-          console.log(`IP ${parsedIp} is not allowed`);
-          console.log(`Allowed IPs: ${allowedIPs.join(', ')}`);
-          res.send(`Not protected. Your IP is ${parsedIp}. Allowed IPs: ${allowedIPs.join(', ')}`);
+          console.error('Allowed IPs is not an array or parsedIp is not valid.');
+          res.send('Error processing your IP.');
         }
       } catch (error) {
         console.error(`Error parsing IP: ${error}`);
