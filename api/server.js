@@ -18,16 +18,25 @@ const fetchAllowedIPs = async () => {
     const response = await axios.get('https://api.unblockvpn.io/app/v1/relays');
     const data = response.data;
     console.log(`First 200 characters of data: ${JSON.stringify(data).substring(0, 200)}`);
-    const relays = data.relays; // Access the "relays" array
-    allowedIPs = relays.map(relay => relay.ip); // Extract IPs from each relay object
+    
+    // Extract IPs from openvpn.relays and wireguard.relays
+    const openvpnRelays = data.openvpn.relays.map(relay => relay.ipv4_addr_in);
+    const wireguardRelays = data.wireguard.relays.map(relay => relay.ipv4_addr_in);
+    allowedIPs = [...openvpnRelays, ...wireguardRelays];
+
     console.log(`Updated allowed IPs: ${allowedIPs.join(', ')}`);
   } catch (error) {
     console.error(`Error fetching allowed IPs: ${error}`);
     // If fetching fails, attempt to read from backup file
     try {
       const backupData = fs.readFileSync(path.resolve(__dirname, '..', 'relays.json'), 'utf8');
-      const backupIPs = JSON.parse(backupData);
-      allowedIPs = backupIPs;
+      const backupJSON = JSON.parse(backupData);
+      
+      // Extract IPs from openvpn.relays and wireguard.relays in the backup file
+      const openvpnRelays = backupJSON.openvpn.relays.map(relay => relay.ipv4_addr_in);
+      const wireguardRelays = backupJSON.wireguard.relays.map(relay => relay.ipv4_addr_in);
+      allowedIPs = [...openvpnRelays, ...wireguardRelays];
+
       console.log(`Using backup IPs: ${allowedIPs.join(', ')}`);
     } catch (backupError) {
       console.error(`Error reading backup IPs: ${backupError}`);
