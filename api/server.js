@@ -4,10 +4,13 @@ const ipaddr = require('ipaddr.js');
 const fs = require('fs');
 const path = require('path');
 const locationApp = require('./location');
+const cors = require('cors'); // Import the cors middleware
 require('dotenv').config();
 
 const app = express();
 app.set('trust proxy', 1); // Set trust proxy to true
+
+app.use(cors()); // Enable CORS for all routes
 
 let allowedIPs = [];
 let cachedAllowedIPs = [];
