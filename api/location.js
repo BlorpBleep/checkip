@@ -29,9 +29,9 @@ app.get('/check-ip', async (req, res) => {
     if (parsedIp && ipaddr.IPv4.isValid(parsedIp)) {
       const locationData = await fetchLocationData(parsedIp);
       if (locationData) {
-        const { city, country_name } = locationData;
-        console.log(`IP ${parsedIp} is located in ${city}, ${country_name}`);
-        res.send(`Your IP is ${parsedIp}, located in ${city}, ${country_name}.`);
+        const { city, country_name, isp } = locationData;
+        console.log(`IP ${parsedIp} is located in ${city}, ${country_name}, ISP: ${isp}`);
+        res.send(`Your IP is ${parsedIp}, located in ${city}, ${country_name}, ISP: ${isp}.`);
       } else {
         console.error('Failed to fetch location data.');
         res.send(`Your IP is ${parsedIp}. Failed to fetch location data.`);

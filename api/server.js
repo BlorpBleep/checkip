@@ -97,11 +97,15 @@ app.get('/check-ip', async (req, res) => {
           
           if (allowedIPs.includes(parsedIp)) {
             console.log(`IP ${parsedIp} is allowed`);
-            res.send(`Protected by CicadaVPN! Your IP is ${parsedIp}${locationInfo}. Allowed IPs: ${allowedIPs.join(', ')}`);
+            
+            //res.send(`Protected by CicadaVPN! Your IP is ${parsedIp}${locationInfo}. Allowed IPs: ${allowedIPs.join(', ')}`);
+            res.send(`Status: Protected by CicadaVPN! IP: ${parsedIp}`);
+
           } else {
             console.log(`IP ${parsedIp} is not allowed`);
             console.log(`Allowed IPs: ${allowedIPs.join(', ')}`);
-            res.send(`Not using CicadaVPN - Your IP is ${parsedIp}${locationInfo}. Allowed IPs: ${allowedIPs.join(', ')}`);
+            //res.send(`Not using CicadaVPN - Your IP is ${parsedIp}${locationInfo}. Allowed IPs: ${allowedIPs.join(', ')}`);
+            res.send(`Status: Not using CicadaVPN - IP: ${parsedIp}`);
           }
         } else {
           console.error('Allowed IPs is not an array or parsedIp is not valid.');
