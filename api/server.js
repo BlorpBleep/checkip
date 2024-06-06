@@ -103,7 +103,7 @@ app.get('/check-ip', async (req, res) => {
         } else {
           console.log(`IP ${parsedIp} is not allowed`);
           console.log(`Allowed IPs: ${cachedAllowedIPs.join(', ')}`);
-          res.json({ status: 'Not using CicadaVPN', ip: parsedIp, locationInfo });
+          res.json({ status: 'Not Protected by CicadaVPN', ip: parsedIp, locationInfo });
         }
       } else {
         console.error('Cached allowed IPs is not an array or parsedIp is not valid.');
