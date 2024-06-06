@@ -10,7 +10,6 @@ const app = express();
 app.set('trust proxy', 1); // Set trust proxy to true
 
 let allowedIPs = [];
-
 let isFetchingIPs = false; // Flag to track ongoing fetch
 
 // Function to fetch location data from GeoIP API
@@ -82,38 +81,34 @@ app.get('/check-ip', async (req, res) => {
   
   if (isLocalRequest) {
     console.log('Local request detected. Bypassing IP check.');
-    res.send(`You are protected. Allowed IPs: ${allowedIPs.join(', ')}`);
+    res.json({ status: 'Local request detected. Bypassing IP check.', allowedIPs });
   } else {
     if (isFetchingIPs) {
       // IPs are being fetched, send a temporary message
       console.log('Allowed IPs are being updated. Please try again later.');
-      res.send('Allowed IPs are being updated. Please try again later.');
+      res.json({ status: 'Allowed IPs are being updated. Please try again later.' });
     } else {
       try {
         const parsedIp = ipaddr.parse(clientIp).toString();
         if (parsedIp && ipaddr.IPv4.isValid(parsedIp) && Array.isArray(allowedIPs)) {
           const locationData = await fetchLocationData(parsedIp);
-          const locationInfo = locationData ? `, located in ${locationData.city}, ${locationData.country_name}` : '';
+          const locationInfo = locationData ? { city: locationData.city, country: locationData.country_name } : null;
           
           if (allowedIPs.includes(parsedIp)) {
             console.log(`IP ${parsedIp} is allowed`);
-            
-            //res.send(`Protected by CicadaVPN! Your IP is ${parsedIp}${locationInfo}. Allowed IPs: ${allowedIPs.join(', ')}`);
-            res.send(`Status: Protected by CicadaVPN! IP: ${parsedIp}`);
-
+            res.json({ status: 'Protected by CicadaVPN!', ip: parsedIp, locationInfo });
           } else {
             console.log(`IP ${parsedIp} is not allowed`);
             console.log(`Allowed IPs: ${allowedIPs.join(', ')}`);
-            //res.send(`Not using CicadaVPN - Your IP is ${parsedIp}${locationInfo}. Allowed IPs: ${allowedIPs.join(', ')}`);
-            res.send(`Status: Not using CicadaVPN - IP: ${parsedIp}`);
+            res.json({ status: 'Not using CicadaVPN', ip: parsedIp, locationInfo });
           }
         } else {
           console.error('Allowed IPs is not an array or parsedIp is not valid.');
-          res.send('Error processing your IP.');
+          res.json({ status: 'Error processing your IP.' });
         }
       } catch (error) {
         console.error(`Error parsing IP: ${error}`);
-        res.send('Error processing your IP.');
+        res.json({ status: 'Error processing your IP.' });
       }
     }
   }
